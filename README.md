@@ -13,3 +13,7 @@ Start by running `npm install` inside the project folder
 `npm run eslint` to run eslint
 `npm run build` to make a production build
 `npm run start-prod` to run your production build
+
+##URL to the other pipeline:
+
+https://github.com/mnzander/fullstackopen-course/tree/main/part2/phonebook/.github/workflows
