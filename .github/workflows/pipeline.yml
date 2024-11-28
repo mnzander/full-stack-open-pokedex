@@ -46,9 +46,27 @@ jobs:
           path: playwright-report/
           retention-days: 30
 
-      - name: Trigger Deployment
+      - name: Deploy
+        id: deploy
         if: ${{ github.event_name == 'push' && !contains(github.event.head_commit.message, '#skip') }}
         run: curl https://api.render.com/deploy/srv-${{ secrets.RENDER_SERVICE_ID }}?key=${{ secrets.RENDER_API_KEY }}
+
+      - name: Discord webhook (deploy)
+        if: ${{ steps.deploy.outcome == 'success' }}
+        uses: rjstone/discord-webhook-notify@89b0bf43c2c8514f70d0dcba4a706b904e8a3112
+        with:
+            description: Commit [${{ github.sha }}](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}) built and [deployed](${{ vars.DEPLOYMENT_URL }})!
+            footer: Triggered by ${{ github.triggering_actor }}
+            severity: info
+            webhookUrl: ${{ secrets.DISCORD_WEBHOOK_URL }}
+      - name: Discord webhook (failure)
+        uses: rjstone/discord-webhook-notify@89b0bf43c2c8514f70d0dcba4a706b904e8a3112
+        if: ${{ failure() }}
+        with:
+            description: Pipeline failed for commit [${{ github.sha }}](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}).
+            footer: Triggered by ${{ github.triggering_actor }}
+            severity: error
+            webhookUrl: ${{ secrets.DISCORD_WEBHOOK_URL }}
 
   tag_release:
     needs: [simple_deployment_pipeline]
@@ -61,7 +79,7 @@ jobs:
 
       - name: Bump version and push tag
         if: ${{ github.event_name == 'push' && !contains(github.event.head_commit.message, '#skip') }}
-        uses: anothrNick/github-tag-action@1.71.0
+        uses: anothrNick/github-tag-action@f278d49d30cdd8775cc3e7dd00b5ee11686ee297
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DEFAULT_BUMP: patch
