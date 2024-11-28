@@ -5,6 +5,10 @@ on:
     branches:
       - main
 
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize]
+
 jobs:
   simple_deployment_pileline:
     runs-on: ubuntu-20.04
@@ -42,4 +46,5 @@ jobs:
           retention-days: 30
 
       - name: Trigger Deployment
+        if: ${{ github.event_name == 'push' }}
         run: curl https://api.render.com/deploy/srv-${{ secrets.RENDER_SERVICE_ID }}?key=${{ secrets.RENDER_API_KEY }}
